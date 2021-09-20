@@ -1,15 +1,13 @@
 import os
 import random
 import discord
-from dotenv import load_dotenv
 from discord.ext import commands
 import sys, traceback
 import keep_alive
 
 print("hello")
 
-load_dotenv()
-TOKEN = os.getenv("$DISCORD_TOKEN")
+TOKEN = os.getenv("DISCORD_TOKEN")
 
 initial_extensions = ['cogs.member',
                       'cogs.owner',
@@ -35,3 +33,4 @@ async def on_ready():
 
 keep_alive.keep_alive()
 bot.run(TOKEN, bot=True, reconnect=True)
+print("bot runnint")
