@@ -4,10 +4,12 @@ import discord
 from dotenv import load_dotenv
 from discord.ext import commands
 import sys, traceback
+import keep_alive
 
+print("hello")
 
 load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
+TOKEN = os.getenv("$DISCORD_TOKEN")
 
 initial_extensions = ['cogs.member',
                       'cogs.owner',
@@ -30,4 +32,6 @@ async def on_ready():
     # Changes our bots Playing Status. type=1(streaming) for a standard game you could remove type and url.
     await bot.change_presence(activity=discord.Game(name="osu! uwu"))
     
+
+keep_alive.keep_alive()
 bot.run(TOKEN, bot=True, reconnect=True)
