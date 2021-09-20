@@ -14,8 +14,9 @@ ffmpeg_options = {
 class VoiceChatCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.is_playing = False
-        self.music_queue = []
+        self.is_playing = {}
+        self.music_queue = {}
+        self.voice_clients = {}
         self.np = ""
         self.ydl_opts = {
             'format': 'bestaudio/best',
@@ -25,12 +26,12 @@ class VoiceChatCog(commands.Cog):
                 'preferredquality': '192',
             }],
         }
-        self.voice_client = None
+        self.guild_id = None
 
         # optional
         self.uploader = None
         self.uploader_url = None
-        self.title = None
+        self.titles = {}
         self.thumbnail = None
         self.description = None
         self.duration = None
@@ -46,7 +47,7 @@ class VoiceChatCog(commands.Cog):
             
         query = " ".join(args)
         guild = ctx.guild
-        self.voice_client = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
+        self.voice_clients[ctx.guild.id] = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
         voice_channel = ctx.author.voice.channel
         if voice_channel is None:
             await ctx.send("請加入頻道 Connect to a voice channel!")
@@ -56,58 +57,70 @@ class VoiceChatCog(commands.Cog):
                 await ctx.send("下載不了破網路 cannot download song your internet is shit")
             else:
                 await ctx.send("加入列單 added song to queue")
-                self.music_queue.append([song, voice_channel])
+                await ctx.send(ctx.guild.id)
+                try:
+                    self.music_queue[ctx.guild.id].append(song)
+                except:
+                    self.music_queue[ctx.guild.id] = [song]
+                self.guild_id = ctx.guild.id
+                print("\n\n")
+                print(self.music_queue[ctx.guild.id])
+                print("\n\n")
                 
-                if self.is_playing == False:
-                    await self.play_music()
+                if self.is_playing[ctx.guild.id] == False:
+                    await self.play_music(ctx.guild)
 
-    async def play_music(self):
-        if len(self.music_queue) > 0:
-            self.is_playing = True
+    async def play_music(self, guild):
+        guild_id = guild.id
 
-            m_url = self.music_queue[0][0]['source']  
-            self.title = self.music_queue[0][0]['title']   
-            print(self.music_queue)
-            self.music_queue.pop(0)
-            print(self.voice_client)
-            self.voice_client.play(discord.FFmpegPCMAudio(m_url, **ffmpeg_options,  executable="C:/ffmpeg/bin/ffmpeg.exe"), after=lambda e: self.play_next())
+        if len(self.music_queue[guild_id]) > 0:
+            self.is_playing[guild_id] = True
+
+            m_url = self.music_queue[guild_id][0]['source']  
+            self.titles[guild_id] = self.music_queue[guild_id][0]['title']
+            self.music_queue[guild_id].pop(0)
+            self.voice_clients[guild_id].play(discord.FFmpegPCMAudio(m_url, **ffmpeg_options,  executable="C:/ffmpeg/bin/ffmpeg.exe"), after=lambda e: self.play_next(guild_id))
         else:
-            self.is_playing = False
+            self.is_playing[guild_id] = False
 
-    def play_next(self):
-        if len(self.music_queue) > 0:
-            self.is_playing = True
-            m_url = self.music_queue[0][0]['source']
-            self.title = self.music_queue[0][0]['title']   
-            self.music_queue.pop(0)
-
-            self.voice_client.play(discord.FFmpegPCMAudio(m_url, **ffmpeg_options, executable="C:/ffmpeg/bin/ffmpeg.exe"), after=lambda e: self.play_next())
+    def play_next(self, guild_id):
+        if len(self.music_queue[guild_id]) > 0:
+            self.is_playing[guild_id] = True
+            m_url = self.music_queue[guild_id][0]['source']  
+            self.titles[guild_id] = self.music_queue[guild_id][0]['title']
+            self.music_queue[guild_id].pop(0)
+            self.voice_clients[guild_id].play(discord.FFmpegPCMAudio(m_url, **ffmpeg_options, executable="C:/ffmpeg/bin/ffmpeg.exe"), after=lambda e: self.play_next(guild_id))
         else:
-            self.is_playing = False
+            self.is_playing[guild_id] = False
 
     @commands.command()
     async def np(self, ctx):
-        if self.title == "":
+        if self.titles[ctx.guild.id] == "":
             await ctx.send("Nothing is playing rn ???")
         else:
             embed = discord.Embed(title = "**Now Playing**", description = "You are listening to this, dumbass", color=0x7d7aff) 
-            embed.add_field(name= "`Now Playing`", value = self.title)
+            embed.add_field(name= "`Now Playing`", value = self.titles[ctx.guild.id])
             await ctx.send(embed=embed)
 
     @commands.command()
     async def queue(self, ctx):
         embed = discord.Embed(title = "**Queue**", description = "Lists the upcoming songs", color=0x7d7aff) 
-        embed.add_field(name= "`Now Playing`", value = self.title)
 
-        if(len(self.music_queue) == 0):
+        try:
+            queue = self.music_queue[ctx.guild.id]
+        except:
+            self.music_queue[ctx.guild.id] = []
+            queue = self.music_queue[ctx.guild.id]
+
+        if(len(queue) == 0):
             embed.add_field(name= "`Up Next`", value = "No songs queued", inline=False)
-        elif(len(self.music_queue) > 0):
+        elif(len(queue) > 0):
             counter = 1
-            embed.add_field(name= "`Up Next`", value = '**' + str(counter) + '**: ' + self.music_queue[0][0]['title'], inline=False)
-            if(len(self.music_queue) > 1):
-                for i in range(1, len(self.music_queue)):
+            embed.add_field(name= "`Up Next`", value = '**' + str(counter) + '**: ' + queue[0]['title'], inline=False)
+            if(len(queue) > 1):
+                for i in range(1, len(queue)):
                     counter+=1
-                    embed.add_field(name='\u200b', value='**' + str(counter) + '**: ' + self.music_queue[i][0]['title'], inline=False)
+                    embed.add_field(name='\u200b', value='**' + str(counter) + '**: ' + queue[i]['title'], inline=False)
 
         await ctx.send(embed=embed)
 
@@ -124,6 +137,8 @@ class VoiceChatCog(commands.Cog):
     @commands.command()
     async def join(self, ctx):
         channel = ctx.author.voice.channel
+        self.titles[ctx.guild.id] = None
+        self.is_playing[ctx.guild.id] = False
         await channel.connect()
 
     @commands.command()
@@ -132,26 +147,28 @@ class VoiceChatCog(commands.Cog):
 
     @commands.command(name='skip', pass_context=True)
     async def skip(self, ctx):
-        voice_client = self.voice_client
+        voice_client = self.voice_clients[ctx.guild.id]
         if voice_client == None:
             await ctx.send('nothing is playing are you deaf?')
         else:
-            if voice_client.is_playing():
+            if self.is_playing[ctx.guild.id]:
                 voice_client.stop()
-                await ctx.send('skipping ' + self.title)
+                await ctx.send('skipping ' + self.titles[ctx.guild.id])
 
     @commands.command(pass_context=True)
     async def pause(self, ctx):
-        voice_client = self.voice_client
-        if voice_client.is_playing():
+        voice_client = self.voice_clients[ctx.guild.id]
+        if self.is_playing[ctx.guild.id]:
+            self.is_playing[ctx.guild.id] = False
             voice_client.pause()
         else:
             await ctx.send('there\'s no music for you to pause')
 
     @commands.command(pass_context=True)
     async def resume(self, ctx):
-        voice_client = self.voice_client
-        if not voice_client.is_playing():
+        voice_client = self.voice_clients[ctx.guild.id]
+        if not self.is_playing[ctx.guild.id]:
+            self.is_playing[ctx.guild.id] = True
             voice_client.resume()
         else:
             await ctx.send('the music is already playing you fucking idiot')
