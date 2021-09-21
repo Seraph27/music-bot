@@ -79,7 +79,7 @@ class VoiceChatCog(commands.Cog):
             m_url = self.music_queue[guild_id][0]['source']  
             self.titles[guild_id] = self.music_queue[guild_id][0]['title']
             self.music_queue[guild_id].pop(0)
-            self.voice_clients[guild_id].play(discord.FFmpegPCMAudio(m_url, **ffmpeg_options,  executable="C:/ffmpeg/bin/ffmpeg.exe"), after=lambda e: self.play_next(guild_id))
+            self.voice_clients[guild_id].play(discord.FFmpegPCMAudio(m_url, **ffmpeg_options), after=lambda e: self.play_next(guild_id))
         else:
             self.is_playing[guild_id] = False
 
@@ -89,7 +89,7 @@ class VoiceChatCog(commands.Cog):
             m_url = self.music_queue[guild_id][0]['source']  
             self.titles[guild_id] = self.music_queue[guild_id][0]['title']
             self.music_queue[guild_id].pop(0)
-            self.voice_clients[guild_id].play(discord.FFmpegPCMAudio(m_url, **ffmpeg_options, executable="C:/ffmpeg/bin/ffmpeg.exe"), after=lambda e: self.play_next(guild_id))
+            self.voice_clients[guild_id].play(discord.FFmpegPCMAudio(m_url, **ffmpeg_options), after=lambda e: self.play_next(guild_id))
         else:
             self.is_playing[guild_id] = False
 
