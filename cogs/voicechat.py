@@ -54,18 +54,17 @@ class VoiceChatCog(commands.Cog):
         else:
             song = self.search_yt(query)
             if type(song) == type(True):
-                await ctx.send("下載不了破網路 cannot download song your internet is shit")
+                await ctx.send("下載不了破網路 cannot download song your internet is trash")
             else:
                 await ctx.send("加入列單 added song to queue")
-                await ctx.send(ctx.guild.id)
                 try:
                     self.music_queue[ctx.guild.id].append(song)
                 except:
                     self.music_queue[ctx.guild.id] = [song]
                 self.guild_id = ctx.guild.id
-                print("\n\n")
-                print(self.music_queue[ctx.guild.id])
-                print("\n\n")
+                # print("\n\n")
+                # print(self.music_queue[ctx.guild.id])
+                # print("\n\n")
                 
                 if self.is_playing[ctx.guild.id] == False:
                     await self.play_music(ctx.guild)
@@ -98,7 +97,7 @@ class VoiceChatCog(commands.Cog):
         if self.titles[ctx.guild.id] == "":
             await ctx.send("Nothing is playing rn ???")
         else:
-            embed = discord.Embed(title = "**Now Playing**", description = "You are listening to this, dumbass", color=0x7d7aff) 
+            embed = discord.Embed(title = "**Now Playing**", description = "You are listening to this", color=0x7d7aff) 
             embed.add_field(name= "`Now Playing`", value = self.titles[ctx.guild.id])
             await ctx.send(embed=embed)
 
@@ -149,7 +148,7 @@ class VoiceChatCog(commands.Cog):
     async def skip(self, ctx):
         voice_client = self.voice_clients[ctx.guild.id]
         if voice_client == None:
-            await ctx.send('nothing is playing are you deaf?')
+            await ctx.send('nothing is playing are you pepega')
         else:
             if self.is_playing[ctx.guild.id]:
                 voice_client.stop()
@@ -162,7 +161,7 @@ class VoiceChatCog(commands.Cog):
             self.is_playing[ctx.guild.id] = False
             voice_client.pause()
         else:
-            await ctx.send('there\'s no music for you to pause')
+            await ctx.send('there\'s no music to pause')
 
     @commands.command(pass_context=True)
     async def resume(self, ctx):
@@ -171,7 +170,7 @@ class VoiceChatCog(commands.Cog):
             self.is_playing[ctx.guild.id] = True
             voice_client.resume()
         else:
-            await ctx.send('the music is already playing you fucking idiot')
+            await ctx.send('the music is already playing')
 
     
 
